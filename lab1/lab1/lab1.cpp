@@ -1,7 +1,6 @@
 ﻿    #include <iostream>
     #include <fstream>
     #include <string>
-    #include <sstream>
 
     using namespace std;
 
@@ -21,25 +20,26 @@
 
     const string filename = "data.txt"; 
 
-    bool InputError() {
+    bool IsFailed() {
         if (cin.fail()) {
             cout << "Error! Please enter a valid number." << endl;
             cin.clear();
             cin.ignore(10000, '\n');
             return true; 
         }
-        cin.ignore(10000, '\n'); 
         return false; 
     }
 
     void add_pipe(Pipe& pipe) {
+        string name;
         cout << "Type name of pipe:";
-        cin >> pipe.name;
-        InputError();
+        getline(cin >> ws,name);//!!!!!!!!!!!
+        pipe.name = name;
+        IsFailed();
         while (1) {
             cout << "Type length of pipe:";
             cin >> pipe.length;
-            if (InputError()) {
+            if (IsFailed()) {
                 continue;
             }
             else if (pipe.length < 0 || pipe.length > 1500) {
@@ -52,7 +52,7 @@
         while (1) {
             cout << "Type diameter of pipe:";
             cin >> pipe.diameter;
-            if (InputError()) {
+            if (IsFailed()) {
                 continue;
             }
             else if (pipe.diameter < 0 || pipe.diameter > 1200) {
@@ -67,12 +67,12 @@
 
     void add_station(Station& station) {
         cout << "Type name of station:";
-        cin >> station.name;
-        InputError();
+        getline(cin>>ws, station.name);
+        IsFailed();
         while (1) {
             cout << "Type amount of workshops in station:";
             cin >> station.workshop_amount;
-            if (InputError()) {
+            if (IsFailed()) {
                 continue;
             }
             else if (station.workshop_amount <= 0) {
@@ -85,7 +85,7 @@
         while (1) {
             cout << "Type amount of workshops in work:";
             cin >> station.Inwork;
-            if (InputError()){
+            if (IsFailed()){
                 continue;
             }
             else if (station.Inwork < 0 || station.Inwork > station.workshop_amount){
@@ -97,8 +97,9 @@
             }
         }
         cout << "Type class of station:";
-        cin >> station.cl4ss;
-        InputError();
+        getline(cin >> ws, station.cl4ss);
+        IsFailed();
+
     }
 
     void save_pipe(Pipe &pipe) {
@@ -127,29 +128,25 @@
             }
             else {
                 cout << "Check out properties of station" << endl;
+                outputF << "CS PROPERTIES" << endl;
             }
         }
-
     }
 
 
     void loadF_pipe(Pipe& pipe) {
         ifstream loadF;
-        const string filename = "data.txt";
         loadF.open(filename);
         string word, start_marker = "PIPE", end_marker = "CS";
         bool reading = false;
-        if (!(loadF >> word)) {
-            return;
-        }
 
         while (loadF >> word) {
             if (!reading) {
                 if (word.find(start_marker) != std::string::npos) {
                     reading = true;
-                    
                     loadF >> word; 
-                    loadF >> pipe.name; 
+                    getline(loadF >> ws,word);
+                    pipe.name = word;
                     loadF >> pipe.length; 
                     loadF >> pipe.diameter; 
                     loadF >> pipe.fixing; 
@@ -171,24 +168,20 @@
 
     void loadF_station(Station& station) {
         ifstream loadF;
-        const string filename = "data.txt";
         loadF.open(filename);
         string word, start_marker = "CS";
         bool reading = false;
 
-        if (!(loadF >> word)) {
-            cout << "File is empty!" << endl;
-            return;
-        }
 
         while (loadF >> word) {
             if (!reading) {
                 if (word.find(start_marker) != std::string::npos) {
                     reading = true;
                     loadF >> word; 
-                    loadF >> station.name; 
+                    getline(loadF >> ws, word);
+                    station.name = word;
                     loadF >> station.workshop_amount; 
-                    loadF >> station.Inwork; 
+                    loadF >> station.Inwork;
                     loadF >> station.cl4ss; 
                     break;
                 }
@@ -204,13 +197,23 @@
 
     void output_pipe(Pipe& pipe)
     {
-        cout << "PIPE PROPERTIES" << endl;
-        cout << "Name: " << pipe.name << endl << "Length: " << pipe.length << endl << "Diametr: " << pipe.diameter << endl << "Fixing: " << pipe.fixing << endl << endl;
+        if (!pipe.name.empty()) {
+            cout << "PIPE PROPERTIES" << endl;
+            cout << "Name: " << pipe.name << endl << "Length: " << pipe.length << endl << "Diametr: " << pipe.diameter << endl << "Fixing: " << pipe.fixing << endl << endl;
+        }
+        else {
+            cout << "Pipe properties are empty!" << endl;
+        }
     }
-    void output_station(Station &station)
+    void output_station(Station& station)
     {
-        cout << "CS PROPERTIES" << endl;
-        cout << "Name: " << station.name << endl << "Workshop amount: " << station.workshop_amount << endl << "Inwork: " << station.Inwork << endl << "Class:" << station.cl4ss << endl;
+        if (!station.name.empty()) {
+            cout << "CS PROPERTIES" << endl;
+            cout << "Name: " << station.name << endl << "Workshop amount: " << station.workshop_amount << endl << "Inwork: " << station.Inwork << endl << "Class:" << station.cl4ss << endl;
+        }
+        else {
+            cout << "Cs properties are empty!" << endl;
+        }
     }
 
     void edit_pipe(Pipe& pipe)
@@ -237,7 +240,7 @@
             cout << "Please enter new number of workshops in work from 0 to " << station.workshop_amount << ": ";
             cin >> value;
 
-            if (InputError()) {
+            if (IsFailed()) {
                 continue;
             }
             else if (value < 0 || value > station.workshop_amount) {
@@ -260,7 +263,6 @@
             cout << "MAIN MENU:" << endl << "1.Add pipe" << endl << "2.Add station" << endl << "3.View objects " << endl << "4.Edit pipe" << endl << "5.Edit CS" << endl << "6.Save to file" << endl << "7.Load from file" << endl << "0.Exit" << endl;
             cin >> choice;
             if (cin.good() && choice <= 7 && choice >= 0) {
-                InputError();
                 switch (choice) {
                 case 0:
                     return 0;
@@ -291,13 +293,9 @@
                 }
             }
             else {
-                if (!InputError()) {
+                if (!IsFailed()) {
                     cout << "Error! Input number from 0 to 7" << endl;
                 }
-                else {
-                    InputError();
-                }
-
             }
         }
     }

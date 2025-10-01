@@ -1,0 +1,6 @@
+PIPE PROPERTIES
+Nord Stream
+200
+100
+0
+
