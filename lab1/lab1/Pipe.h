@@ -17,7 +17,6 @@ public:
     Pipe(int newId) : id(newId) {}
     string name;
     bool fixing = false;
-    void output_pipe();
     void edit_pipe();
     void save_pipe(ofstream& outputF);
     void load_pipe(ifstream& loadF);
@@ -29,6 +28,7 @@ public:
     void set_is_fixing(bool new_fixing) { fixing = new_fixing; }
 
     friend std::istream& operator>>(std::istream& in, Pipe& p);
+    friend std::ostream& operator<<(std::ostream& out, const Pipe& p);
 
 
 };

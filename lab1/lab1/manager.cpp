@@ -26,7 +26,7 @@ void Manager::display_all_pipes() {
     cout << "ALL PIPES" << endl;
 
     for (auto& [id, pipe] : pipes) {
-        pipe.output_pipe();
+        cout << pipe;
     }
 }
 
@@ -38,7 +38,7 @@ void Manager::display_all_stations() {
 
     cout << "ALL STATIONS" << endl;
     for (auto& [id, station] : stations) {
-        station.output_station();
+        cout << station;
     }
 }
 
@@ -78,8 +78,8 @@ void Manager::add_pipe() {
 
 void Manager::edit_pipe(int id) {
     if (pipes.contains(id)){
-        pipes.at(id).edit_pipe(); // at(id) указывает на ключ https://www.geeksforgeeks.org/cpp/unordered_map-at-cpp/
-        cout << endl << "You successfully changed the fixing value of Pipe with ID " + to_string(id) + "to" + to_string(pipes.at(id).get_is_fixing()) << endl;
+        pipes[id].edit_pipe(); // at(id) указывает на ключ https://www.geeksforgeeks.org/cpp/unordered_map-at-cpp/
+        cout << endl << "You successfully changed the fixing value of Pipe with ID " + to_string(id) + "to " + to_string(pipes[id].get_is_fixing()) << endl;
     }
     else {
         cout << "Pipe with ID " << id << " not found!" << endl;
@@ -106,7 +106,7 @@ void Manager::add_station() {
 
 void Manager::edit_station(int id) {
     if (stations.contains(id)) {
-        stations.at(id).edit_station();
+        stations[id].edit_station();
     }
     else {
         cout << "Station with ID " << id << " not found!" << endl;
@@ -154,71 +154,6 @@ void Manager::load_from_file(string& filename) {
         cout << "Error opening file for reading!" << endl;
     }
 }
-
-void Manager::edit_pipes_batch(vector<int>& ids) {
-    if (ids.empty()) {
-        cout << "No pipes selected for editing." << endl;
-        return;
-    }
-
-    cout << "Choose editing mode:"<< endl << "1. Toggle fixing status for all selected pipes" << endl << "2. Set specific fixing status (0 - working, 1 - under repair)" << endl << "Enter option: ";
-
-    int choice = GetCorrectNumber(1, 2);
-
-    bool new_status = false;
-    if (choice == 2) {
-        cout << "Enter status (0 - working, 1 - under repair): ";
-        GetCorrectNumber(0,1);
-    }
-
-    int edited_count = 0;
-    for (int id : ids) {
-        auto it = pipes.find(id);
-        if (it != pipes.end()) {
-            if (choice == 1)
-                it->second.set_is_fixing(!it->second.get_is_fixing());
-            else if (choice == 2)
-                it->second.set_is_fixing(new_status);
-            edited_count++;
-        }
-    }
-    cout << "Successfully edited " << edited_count << " pipes." << endl;
-}
-
-void Manager::delete_pipes_batch(vector<int>& ids) {
-    if (ids.empty()) {
-        cout << "No pipes selected for deletion." << endl;
-        return;
-    }
-
-    cout << "Are you sure you want to delete " << ids.size() << " pipes? (1 - yes, 0 - no): ";
-    int confirm = GetCorrectNumber(0, 1);
-    if (confirm == 0) {
-        cout << "Operation canceled." << endl;
-        return;
-    }
-
-    int deleted_count = 0;
-    for (int id : ids) {
-        if (pipes.erase(id)) {
-            deleted_count++;
-        }
-    }
-    cout << "Deleted " << deleted_count << " pipes." << endl;
-}
-
-void Manager::pipes_batch_menu(vector<int>& ids) {
-    cout << "Choose operation:" << endl << "1 - batch delete." << endl << "2 - batch edit." << endl;
-
-    switch (GetCorrectNumber(1, 2)) {
-        case 1:
-            delete_pipes_batch(ids);
-            break;
-        case 2:
-            edit_pipes_batch(ids);
-            break;
-    }
-}
 bool CheckByNamePipe(const Pipe & pipe,string filter_name) {
     return pipe.name == filter_name;
 }
@@ -237,7 +172,7 @@ template<typename T>
 using Filter_pipe = bool(*)(const Pipe &pipe,T param);
 
 template<typename T>
-vector<int>FindPipesByFilter(const unordered_map<int, Pipe> pipes, Filter_pipe<T> f, T param) {
+vector<int>FindPipesByFilter(const unordered_map<int, Pipe>& pipes, Filter_pipe<T> f, T param) {
     vector<int>res;
     int i = 1;
     for (auto& [id, pipe] : pipes) {
@@ -251,7 +186,7 @@ template<typename T>
 using Filter_station = bool(*)(const Station& station, T param);
 
 template<typename T>
-vector<int>FindStationsByFilter(const unordered_map<int, Station> stations, Filter_station<T> f, T param) {
+vector<int>FindStationsByFilter(const unordered_map<int, Station> &stations, Filter_station<T> f, T param) {
     vector<int>res;
     int i = 1;
     for (auto& [id, station] : stations) {
@@ -317,6 +252,68 @@ void Manager::handle_search() {
     }
 }
 
+void Manager::edit_pipes_batch(vector<int>& ids) {
+    if (ids.empty()) {
+        cout << "No pipes selected for editing." << endl;
+        return;
+    }
+
+    cout << "Choose editing mode:" << endl << "1. Toggle fixing status for all selected pipes" << endl << "2. Set specific fixing status (0 - working, 1 - under repair)" << endl << "Enter option: ";
+
+    int choice = GetCorrectNumber(1, 2);
+
+    bool new_status = false;
+    if (choice == 2) {
+        cout << "Enter status (0 - working, 1 - under repair): ";
+        GetCorrectNumber(0, 1);
+    }
+
+    int edited_count = 0;
+    for (int id : ids) {
+        if (choice == 1)
+            pipes.at(id).set_is_fixing(!pipes.at(id).get_is_fixing());
+        else if (choice == 2)
+            pipes.at(id).set_is_fixing(new_status);
+        edited_count++;
+    }
+    cout << "Successfully edited " << edited_count << " pipes." << endl;
+}
+
+void Manager::delete_pipes_batch(vector<int>& ids) {
+    if (ids.empty()) {
+        cout << "No pipes selected for deletion." << endl;
+        return;
+    }
+
+    cout << "Are you sure you want to delete " << ids.size() << " pipes? (1 - yes, 0 - no): ";
+    int confirm = GetCorrectNumber(0, 1);
+    if (confirm == 0) {
+        cout << "Operation canceled." << endl;
+        return;
+    }
+
+    int deleted_count = 0;
+    for (int id : ids) {
+        if (pipes.erase(id)) {
+            deleted_count++;
+        }
+    }
+    cout << "Deleted " << deleted_count << " pipes." << endl;
+}
+
+void Manager::pipes_batch_menu(vector<int>& ids) {
+    cout << "Choose operation:" << endl << "1 - batch delete." << endl << "2 - batch edit." << endl;
+
+    switch (GetCorrectNumber(1, 2)) {
+    case 1:
+        delete_pipes_batch(ids);
+        break;
+    case 2:
+        edit_pipes_batch(ids);
+        break;
+    }
+    handle_pipes_batch_menu();
+}
 void Manager::handle_pipes_batch_menu() {
     if (pipes.empty()) {
         cout << "No pipes available for batch editing.\n";
@@ -326,49 +323,62 @@ void Manager::handle_pipes_batch_menu() {
     vector<int> selected_ids;
     cout << endl << "Batch Operation Mode" << endl << "1 - Select all pipes" << endl << "2 - Select by name" << endl << "3 - Select by status" << endl << "4 - Select manually by ID" << endl << "0 - Cancel" << endl << "Enter option: ";
 
-
-    switch (GetCorrectNumber(1, 4)) {
-    case 1:
-        for (auto& [id, _] : pipes)
-            selected_ids.push_back(id);
-        break;
-    case 2: {
-        string name;
-        cout << "Enter name: ";
-        INPUT_LINE(cin, name);
-        selected_ids = FindPipesByFilter(pipes, CheckByNamePipe, name);
-        break;
-    }
-    case 3: {
-        bool status;
-        cout << "Enter status (0 - working, 1 - under repair): ";
-        status = GetCorrectNumber(0, 1);
-        selected_ids = FindPipesByFilter(pipes, CheckByStatus, status);
-        break;
-    }
-    case 4: {
-        unordered_set<int> selected_ids_set;
-        cout << "Enter pipe IDs separated by spaces (0 to finish): ";
-
-        while (true)
-        {
-            int id = GetCorrectNumber(0, INT_MAX);
-            if (id == 0)                                 
-                break;
-            selected_ids_set.insert(id);
+        switch (GetCorrectNumber(0, 4)) {
+        case 0:
+            break;
+        case 1:
+            for (auto& [id, _] : pipes)
+                selected_ids.push_back(id);
+            break;
+        case 2: {
+            string name;
+            cout << "Enter name: ";
+            INPUT_LINE(cin, name);
+            selected_ids = FindPipesByFilter(pipes, CheckByNamePipe, name);
+            break;
         }
-        selected_ids.assign(selected_ids_set.begin(), selected_ids_set.end());
-        break;
+        case 3: {
+            unordered_set<int> selected_ids_set;
+            bool status;
+            cout << "Enter status (0 - working, 1 - under repair): ";
+            status = GetCorrectNumber(0, 1);
+            selected_ids = FindPipesByFilter(pipes, CheckByStatus, status);
+            for (int id : selected_ids) cout << id << ' '; cout << endl;
+            cout << "Enter pipe IDs separated by enters (0 to finish): " << endl;
+            while (true)
+            {
+                int id = GetCorrectNumber(0, nextPipeId - 1);
+                if (id == 0)
+                    break;
+                selected_ids_set.insert(id);
 
-    }
-          if (selected_ids.empty()) {
-              cout << "No pipes selected for batch operation." << endl;
-              return;
-          }
+                selected_ids.assign(selected_ids_set.begin(), selected_ids_set.end());
+                break;
+            }
+        }
+        case 4: {
+            unordered_set<int> selected_ids_set;
+            cout << "Enter pipe IDs separated by enters (0 to finish): ";
 
-          cout << endl << "Selected " << selected_ids.size() << " pipes: ";
-          for (int id : selected_ids) cout << id << ' ';
-          cout << endl;
-          pipes_batch_menu(selected_ids);
+            while (true)
+            {
+                int id = GetCorrectNumber(0, nextPipeId - 1);
+                if (id == 0)
+                    break;
+                selected_ids_set.insert(id);
+            }
+            selected_ids.assign(selected_ids_set.begin(), selected_ids_set.end());
+            break;
+        }
+        }
+        if (selected_ids.empty()) {
+            cout << "No pipes selected for batch operation." << endl;
+            return;
+        }
+
+        cout << endl << "Selected " << selected_ids.size() << " pipes: ";
+        for (int id : selected_ids) cout << id << ' ';
+        cout << endl;
+        pipes_batch_menu(selected_ids);
     }
-}
+

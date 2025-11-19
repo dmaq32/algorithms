@@ -4,17 +4,6 @@
 void Station::recalculate_unused_percentage() {
     unused_workshops_percentage = (workshop_amount - Inwork) / (double)workshop_amount * 100;
 }
-void Station::output_station() {
-    if (!name.empty()) {
-        cout << endl << "ID: " << id << endl;
-        cout << "Name: " << name << endl << "Workshop amount: " << workshop_amount << endl
-            << "Inwork: " << Inwork << endl << "Unused % of workshops: "
-            << unused_workshops_percentage << "%" << endl << "Class: " << cl4ss << endl;
-    }
-    else {
-        cout << "CS properties are empty!" << endl;
-    }
-}
 
 void Station::edit_station() {
     if (name.empty()) {
@@ -61,4 +50,17 @@ std::istream& operator>>(std::istream& in, Station& s) {
 
     s.recalculate_unused_percentage();
     return in;
+}
+std::ostream& operator<<(std::ostream& out,const Station& s) {
+    if (!s.name.empty()) {
+        out << "STATION PROPERTIES:" << endl
+            << "Name: " << s.name << endl
+            << "Workshop amount: " << s.workshop_amount << endl
+            << "Workshop inwork: " << s.Inwork << endl
+            << "Class: " << s.cl4ss << endl;
+    }
+    else {
+        cout << "CS properties are empty!" << endl;
+    }
+    return out;
 }

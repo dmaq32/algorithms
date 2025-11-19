@@ -1,7 +1,7 @@
 #include "pipe.h"
 #include "Utils.h"
 
-void Pipe::output_pipe() {
+/*void Pipe::output_pipe() {
     if (!name.empty()) {
         cout << endl << "PIPE PROPERTIES" << endl;
         cout << "ID: " << id << endl;
@@ -11,7 +11,7 @@ void Pipe::output_pipe() {
     else {
         cout << "Pipe properties are empty!" << endl;
     }
-}
+}*/
 
 void Pipe::edit_pipe() {
     if (name.empty()) {
@@ -48,4 +48,17 @@ std::istream& operator>>(std::istream& in, Pipe& p) {
     p.diameter = GetCorrectNumber<double>(0, 1200);
 
     return in;
+}
+std::ostream& operator<<(std::ostream& out, const Pipe& p) {
+    if (!p.name.empty()) {
+        out << endl << "PIPE PROPERTIES:" << endl
+            << "Name: " << p.name << endl
+            << "Length: " << p.length << endl
+            << "Diameter: " << p.diameter << endl
+            << "Fixing: " << p.fixing << endl;
+    }
+    else {
+        cout << "Pipe properties are empty!" << endl;
+    }
+    return out;
 }

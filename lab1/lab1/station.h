@@ -18,7 +18,6 @@ public:
     Station(int newId) : id(newId) {}
     Station() : id(0), name(""), workshop_amount(0), cl4ss(""), Inwork(0) {}
     double unused_workshops_percentage;
-    void output_station();
     void edit_station();
     void save_station(ofstream& outputF);
     void load_station(ifstream& loadF);
@@ -29,5 +28,6 @@ public:
     double get_unused_percentage() { return unused_workshops_percentage; }
 
     friend std::istream& operator>>(std::istream& in, Station& s);
+    friend std::ostream& operator<<(std::ostream& out, const Station& s);
 
 };

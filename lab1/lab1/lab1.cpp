@@ -21,6 +21,7 @@ int main()
 
     Manager manager;
     string filename;
+
     while (1) {
         manager.display_main_menu();
         int choice = GetCorrectNumber(0, 13);
