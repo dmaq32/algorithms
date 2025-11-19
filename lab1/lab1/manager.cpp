@@ -1,24 +1,10 @@
 #include "manager.h"
-#include "pipe.h"
 #include <iostream>
 #include <chrono>
-#include <set>
+#include "Utils.h"
+#include <unordered_set>
 using namespace std;
 
-
-bool IsFailed() {
-    if (cin.fail()) {
-        cout << "Error! Please enter a valid number." << endl;
-        cin.clear();
-        cin.ignore(10000, '\n');
-        return true;
-    }
-    return false;
-}
-template <typename T>
-void log_action(T action) {
-    cerr << action << endl;
-}
 
 void Manager::display_search_menu() {
     cout << endl << "SEARCH MENU:" << endl
@@ -26,7 +12,7 @@ void Manager::display_search_menu() {
 }
 
 void Manager::display_main_menu() {
-    cout << endl << "MAIN MENU:" << endl<< "1. Add pipe" << endl<< "2. Add station" << endl<< "3. View all objects" << endl << "4. Edit pipe" << endl<< "5. Edit station" << endl << "6. Delete pipe" << endl << "7. Delete station" << endl << "8. View all pipes" << endl<< "9. View all stations" << endl << "10. Save to file" << endl << "11. Load from file" << endl << "12. Search objects" << endl <<"Batch edit pipes" << endl << "0. Exit" << endl
+    cout << endl << "MAIN MENU:" << endl<< "1. Add pipe" << endl<< "2. Add station" << endl<< "3. View all objects" << endl << "4. Edit pipe" << endl<< "5. Edit station" << endl << "6. Delete pipe" << endl << "7. Delete station" << endl << "8. View all pipes" << endl<< "9. View all stations" << endl << "10. Save to file" << endl << "11. Load from file" << endl << "12. Search objects" << endl <<"13. Batch edit pipes" << endl << "0. Exit" << endl
 << "Choose option: ";
 
 }
@@ -83,18 +69,17 @@ void Manager::save_to_file(string& filename) {
 
 
 void Manager::add_pipe() {
-    Pipe newPipe;
-    newPipe.set_station_id(nextPipeId);
-    newPipe.add_pipe();
-    pipes[nextPipeId] = newPipe;
+    Pipe newPipe(nextPipeId);
+    cin >> newPipe;
+    pipes.emplace(nextPipeId,newPipe);
     cout << "Pipe added with ID: " << nextPipeId << endl;
     nextPipeId++;
 }
 
 void Manager::edit_pipe(int id) {
-    if (auto it = pipes.find(id); it != pipes.end()) {
-        it->second.edit_pipe();
-        cout << endl << "You successfully changed the fixing value of Pipe with ID " + to_string(id) + "to" + to_string(it->second.get_is_fixing()) << endl;
+    if (pipes.contains(id)){
+        pipes.at(id).edit_pipe(); // at(id) указывает на ключ https://www.geeksforgeeks.org/cpp/unordered_map-at-cpp/
+        cout << endl << "You successfully changed the fixing value of Pipe with ID " + to_string(id) + "to" + to_string(pipes.at(id).get_is_fixing()) << endl;
     }
     else {
         cout << "Pipe with ID " << id << " not found!" << endl;
@@ -102,27 +87,26 @@ void Manager::edit_pipe(int id) {
 }
 
 void Manager::delete_pipe(int id) {
-    if (auto it = pipes.find(id); it != pipes.end()) {
-        pipes.erase(it);
-        cout << "Pipe with ID " << id << " deleted." << endl;
-    }
-    else {
+        pipes.erase(id);
+        if (pipes.erase(id)) {
+            cout << "Pipe with ID " << id << " deleted." << endl;
+        }
+        else {
         cout << "Pipe with ID " << id << " not found!" << endl;
     }
 }
 
 void Manager::add_station() {
-    Station newStation;
-    newStation.set_station_id(nextStationId);
-    newStation.add_station();
-    stations[nextStationId] = newStation;
+    Station newStation(nextStationId);
+    cin >> newStation;
+    stations.emplace(nextStationId,newStation);;
     cout << "Station added with ID: " << nextStationId << endl;
     nextStationId++;
 }
 
 void Manager::edit_station(int id) {
-    if (auto it = stations.find(id); it != stations.end()) {
-        it->second.edit_station();
+    if (stations.contains(id)) {
+        stations.at(id).edit_station();
     }
     else {
         cout << "Station with ID " << id << " not found!" << endl;
@@ -130,9 +114,10 @@ void Manager::edit_station(int id) {
 }
 
 void Manager::delete_station(int id) {
-    if (auto it = stations.find(id); it != stations.end()) {
-        stations.erase(it);
-        cout << "Station with ID " << id << " deleted." << endl;
+
+        stations.erase(id);
+        if (stations.erase(id)){
+            cout << "Station with ID " << id << " deleted." << endl;
     }
     else {
         cout << "Station with ID " << id << " not found!" << endl;
@@ -169,112 +154,6 @@ void Manager::load_from_file(string& filename) {
         cout << "Error opening file for reading!" << endl;
     }
 }
-void Manager::handle_search() {
-    int choice;
-    string search_name;
-    bool repair_status;
-    double min_percent, max_percent;
-    vector<int> found_ids;
-
-    while (true) {
-        display_search_menu();
-        cin >> choice;
-        log_action(choice);
-        if (IsFailed()) continue;
-
-        switch (choice) {
-        case 0:
-            return;
-        case 1: {
-            cout << "Enter pipe name to search: ";
-            cin >> search_name;
-            log_action(search_name);
-            found_ids = find_pipes_by_name(search_name);
-            cout << "Found " << found_ids.size() << " pipes:" << endl;
-            for (int id : found_ids) {
-                cout << "Pipe ID: " << id << endl;
-            }
-            break;
-        }
-        case 2: {
-            cout << "Enter repair status (0 - working, 1 - in repair): ";
-            cin >> repair_status;
-            log_action(repair_status);
-            found_ids = find_pipes_by_status(repair_status);
-            cout << "Found " << found_ids.size() << " pipes:" << endl;
-            for (int id : found_ids) cout << "Pipe ID: " << id << endl;
-            break;
-        }
-        case 3: {
-            cout << "Enter station name to search: ";
-            cin >> search_name;
-            log_action(search_name);
-            found_ids = find_stations_by_name(search_name);
-            cout << "Found " << found_ids.size() << " stations:" << endl;
-            for (int id : found_ids) {
-                cout << "Station ID: " << id << endl;
-            }
-            break;
-        }
-        case 4: {
-            cout << "Enter minimum unused percentage: ";
-            cin >> min_percent;
-            log_action(min_percent);
-            cout << "Enter maximum unused percentage: ";
-            cin >> max_percent;
-            log_action(max_percent);
-            found_ids = find_stations_by_unused_percentage(min_percent, max_percent);
-            cout << "Found " << found_ids.size() << " stations:" << endl;
-            for (int id : found_ids) {
-                cout << "Station ID: " << id << endl;
-            }
-            break;
-        }
-        }
-    }
-    }
-
-vector<int> Manager::find_pipes_by_name(string& name){
-    vector<int> result;
-    for (auto& [id, pipe] : pipes) {
-        if (pipe.get_pipe_name().find(name) != string::npos) {
-            result.push_back(id);
-        }
-    }
-    return result;
-}
-
-vector<int> Manager::find_pipes_by_status(bool fixing_status) {
-    vector<int> result;
-    for (auto& [id, pipe] : pipes) {
-        if (pipe.get_is_fixing() == fixing_status) {
-            result.push_back(id);
-        }
-    }
-    return result;
-}
-
-vector<int> Manager::find_stations_by_name(string& name){
-    vector<int> result;
-    for (auto& [id, station] : stations) {
-        if (station.get_station_name().find(name) != string::npos) {
-            result.push_back(id);
-        }
-    }
-    return result;
-}
-
-
-vector<int> Manager::find_stations_by_unused_percentage(double min_percent, double max_percent){
-    vector<int> result;
-    for (auto& [id, station] : stations) {
-        if (station.get_unused_percentage() >= min_percent &&
-            station.get_unused_percentage() <= max_percent) {
-            result.push_back(id);
-        }
-    }
-    return result;
-}
 
 void Manager::edit_pipes_batch(vector<int>& ids) {
     if (ids.empty()) {
@@ -284,18 +163,12 @@ void Manager::edit_pipes_batch(vector<int>& ids) {
 
     cout << "Choose editing mode:"<< endl << "1. Toggle fixing status for all selected pipes" << endl << "2. Set specific fixing status (0 - working, 1 - under repair)" << endl << "Enter option: ";
 
-    int choice;
-    cin >> choice;
-    log_action(choice);
-
-    if (IsFailed()) return;
+    int choice = GetCorrectNumber(1, 2);
 
     bool new_status = false;
     if (choice == 2) {
         cout << "Enter status (0 - working, 1 - under repair): ";
-        cin >> new_status;
-        log_action(new_status);
-        if (IsFailed()) return;
+        GetCorrectNumber(0,1);
     }
 
     int edited_count = 0;
@@ -319,10 +192,8 @@ void Manager::delete_pipes_batch(vector<int>& ids) {
     }
 
     cout << "Are you sure you want to delete " << ids.size() << " pipes? (1 - yes, 0 - no): ";
-    int confirm;
-    cin >> confirm;
-    log_action(confirm);
-    if (IsFailed() || confirm != 1) {
+    int confirm = GetCorrectNumber(0, 1);
+    if (confirm == 0) {
         cout << "Operation canceled." << endl;
         return;
     }
@@ -337,13 +208,9 @@ void Manager::delete_pipes_batch(vector<int>& ids) {
 }
 
 void Manager::pipes_batch_menu(vector<int>& ids) {
-    int choice;
     cout << "Choose operation:" << endl << "1 - batch delete." << endl << "2 - batch edit." << endl;
-    cin >> choice;
-    log_action(choice);
-    if (IsFailed() || choice < 1 || choice > 2) return;
 
-    switch (choice) {
+    switch (GetCorrectNumber(1, 2)) {
         case 1:
             delete_pipes_batch(ids);
             break;
@@ -352,6 +219,104 @@ void Manager::pipes_batch_menu(vector<int>& ids) {
             break;
     }
 }
+bool CheckByNamePipe(const Pipe & pipe,string filter_name) {
+    return pipe.name == filter_name;
+}
+bool CheckByStatus(const Pipe & pipe,bool filter_status) {
+    return pipe.fixing == filter_status;
+}
+
+bool CheckByNameStation(const Station& station, string filter_name) {
+    return station.name == filter_name;
+}
+bool CheckByPercentage(const Station& station, double filter_value) {
+    return station.unused_workshops_percentage <= filter_value;
+}
+
+template<typename T>
+using Filter_pipe = bool(*)(const Pipe &pipe,T param);
+
+template<typename T>
+vector<int>FindPipesByFilter(const unordered_map<int, Pipe> pipes, Filter_pipe<T> f, T param) {
+    vector<int>res;
+    int i = 1;
+    for (auto& [id, pipe] : pipes) {
+        if (f(pipe,param))
+            res.push_back(i);
+        i++;
+    }
+    return res;
+}
+template<typename T>
+using Filter_station = bool(*)(const Station& station, T param);
+
+template<typename T>
+vector<int>FindStationsByFilter(const unordered_map<int, Station> stations, Filter_station<T> f, T param) {
+    vector<int>res;
+    int i = 1;
+    for (auto& [id, station] : stations) {
+        if (f(station,param))
+            res.push_back(i);
+        i++;
+    }
+    return res;
+}
+
+
+void Manager::handle_search() {
+    string search_name;
+    double value;
+    bool repair_status;
+    vector<int> found_ids;
+
+    while (true) {
+        display_search_menu();
+
+        switch (GetCorrectNumber(0,4)) {
+        case 0:
+            return;
+        case 1: {
+            cout << "Enter pipe name to search: ";
+            INPUT_LINE(cin, search_name);
+            found_ids = FindPipesByFilter(pipes,CheckByNamePipe, search_name);
+            cout << "Found " << found_ids.size() << " pipes:" << endl;
+            for (int id : found_ids) {
+                cout << "Pipe ID: " << id << endl;
+            }
+            break;
+        }
+        case 2: {
+            cout << "Enter repair status (0 - working, 1 - in repair): ";
+            repair_status = GetCorrectNumber(0, 1);
+            found_ids = FindPipesByFilter(pipes,CheckByStatus,repair_status);
+            cout << "Found " << found_ids.size() << " pipes:" << endl;
+            for (int id : found_ids) cout << "Pipe ID: " << id << endl;
+            break;
+        }
+        case 3: {
+            cout << "Enter station name to search: ";
+            INPUT_LINE(cin, search_name);
+            found_ids = FindStationsByFilter(stations, CheckByNameStation,search_name);
+            cout << "Found " << found_ids.size() << " stations:" << endl;
+            for (int id : found_ids) {
+                cout << "Station ID: " << id << endl;
+            }
+            break;
+        }
+        case 4: {
+            cout << "Enter maximum unused percentage: ";
+            value = GetCorrectNumber(0, 100);
+            found_ids = FindStationsByFilter(stations, CheckByPercentage, value);
+            cout << "Found " << found_ids.size() << " stations:" << endl;
+            for (int id : found_ids) {
+                cout << "Station ID: " << id << endl;
+            }
+            break;
+        }
+        }
+    }
+}
+
 void Manager::handle_pipes_batch_menu() {
     if (pipes.empty()) {
         cout << "No pipes available for batch editing.\n";
@@ -361,13 +326,8 @@ void Manager::handle_pipes_batch_menu() {
     vector<int> selected_ids;
     cout << endl << "Batch Operation Mode" << endl << "1 - Select all pipes" << endl << "2 - Select by name" << endl << "3 - Select by status" << endl << "4 - Select manually by ID" << endl << "0 - Cancel" << endl << "Enter option: ";
 
-    int choice;
-    cin >> choice;
-    log_action(choice);
 
-    if (IsFailed() || choice == 0)
-        return;
-    switch (choice) {
+    switch (GetCorrectNumber(1, 4)) {
     case 1:
         for (auto& [id, _] : pipes)
             selected_ids.push_back(id);
@@ -375,42 +335,40 @@ void Manager::handle_pipes_batch_menu() {
     case 2: {
         string name;
         cout << "Enter name: ";
-        cin >> name;
-        log_action(name);
-        selected_ids = find_pipes_by_name(name);
+        INPUT_LINE(cin, name);
+        selected_ids = FindPipesByFilter(pipes, CheckByNamePipe, name);
         break;
     }
     case 3: {
         bool status;
         cout << "Enter status (0 - working, 1 - under repair): ";
-        cin >> status;
-        log_action(status);
-        selected_ids = find_pipes_by_status(status);
+        status = GetCorrectNumber(0, 1);
+        selected_ids = FindPipesByFilter(pipes, CheckByStatus, status);
         break;
     }
     case 4: {
-        set<int> selected_ids_set;
-        int id;
+        unordered_set<int> selected_ids_set;
         cout << "Enter pipe IDs separated by spaces (0 to finish): ";
-        while (cin >> id && id != 0) {
-            log_action(id);
+
+        while (true)
+        {
+            int id = GetCorrectNumber(0, INT_MAX);
+            if (id == 0)                                 
+                break;
             selected_ids_set.insert(id);
         }
-        IsFailed();
-
         selected_ids.assign(selected_ids_set.begin(), selected_ids_set.end());
-
         break;
-        }
-    }
 
-    if (selected_ids.empty()) {
-        cout << "No pipes selected for batch operation." << endl;
-        return;
     }
+          if (selected_ids.empty()) {
+              cout << "No pipes selected for batch operation." << endl;
+              return;
+          }
 
-    cout << endl << "Selected " << selected_ids.size() << " pipes: ";
-    for (int id : selected_ids) cout << id << ' ';
-    cout << endl;
-    pipes_batch_menu(selected_ids);
+          cout << endl << "Selected " << selected_ids.size() << " pipes: ";
+          for (int id : selected_ids) cout << id << ' ';
+          cout << endl;
+          pipes_batch_menu(selected_ids);
+    }
 }

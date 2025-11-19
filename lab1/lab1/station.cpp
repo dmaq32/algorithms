@@ -1,56 +1,14 @@
 #include "station.h"
-#include "Manager.h"
+#include "Utils.h"
 
 void Station::recalculate_unused_percentage() {
     unused_workshops_percentage = (workshop_amount - Inwork) / (double)workshop_amount * 100;
 }
-
-void Station::add_station() {
-    cout << "Type name of station:";
-    getline(cin >> ws, name);
-    log_action(name);
-    while (1) {
-        cout << "Type amount of workshops in station:";
-        cin >> workshop_amount;
-        if (std::cin.eof()) break;  
-        log_action(workshop_amount);
-        if (IsFailed()) {
-            continue;
-        }
-        else if (workshop_amount <= 0) {
-            cout << "Enter existing amount!" << endl;
-        }
-        else {
-            break;
-        }
-    }
-
-    while (1) {
-        cout << "Type amount of workshops in work:";
-        cin >> Inwork;
-        log_action(Inwork);
-        if (IsFailed()) {
-            continue;
-        }
-        else if (Inwork < 0 || Inwork > workshop_amount) {
-            cout << "Enter amount from 0 to " << workshop_amount << "." << endl;
-        }
-        else {
-            break;
-        }
-    }
-
-    cout << "Type class of station:";
-    getline(cin >> ws, cl4ss);
-    log_action(cl4ss);
-    recalculate_unused_percentage();
-}
-
 void Station::output_station() {
     if (!name.empty()) {
         cout << endl << "ID: " << id << endl;
         cout << "Name: " << name << endl << "Workshop amount: " << workshop_amount << endl
-            << "Inwork: " << Inwork << endl << "Unused workshops percentage: "
+            << "Inwork: " << Inwork << endl << "Unused % of workshops: "
             << unused_workshops_percentage << "%" << endl << "Class: " << cl4ss << endl;
     }
     else {
@@ -63,26 +21,11 @@ void Station::edit_station() {
         cout << "Station options are empty" << endl;
         return;
     }
-
-    int value;
-    while (1) {
-        cout << "Please enter new number of workshops in work from 0 to " << workshop_amount << ": ";
-        cin >> value;
-        log_action(value);
-
-        if (IsFailed()) {
-            continue;
-        }
-        else if (value < 0 || value > workshop_amount) {
-            cout << "Error! Value must be between 0 and " << workshop_amount << "." << endl;
-        }
-        else {
-            Inwork = value;
-            recalculate_unused_percentage();
-            cout << "Successfully updated workshops in work to: " << value << endl;
-            return;
-        }
-    }
+    cout << "Please enter new number of workshops in work from 0 to " << workshop_amount << ": ";
+    int value = GetCorrectNumber(0, workshop_amount);
+    Inwork = value;
+    recalculate_unused_percentage();
+    cout << "Successfully updated workshops in work to: " << value << endl;
 }
 
 void Station::save_station(ofstream& outputF){
@@ -101,4 +44,21 @@ void Station::load_station(ifstream& loadF) {
     getline(loadF >> ws, cl4ss);
     recalculate_unused_percentage();
 
+
+}
+std::istream& operator>>(std::istream& in, Station& s) {
+    std::cout << "Type station name: ";
+    INPUT_LINE(in, s.name);
+
+    std::cout << "Type amount of workshops: ";
+    s.workshop_amount = GetCorrectNumber<int>(1, 100000);
+
+    std::cout << "Type amount of workshops in work: ";
+    s.Inwork = GetCorrectNumber<int>(0, s.workshop_amount);
+
+    std::cout << "Type class of station: ";
+    INPUT_LINE(in, s.cl4ss);
+
+    s.recalculate_unused_percentage();
+    return in;
 }

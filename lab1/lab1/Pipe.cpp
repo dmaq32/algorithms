@@ -1,41 +1,5 @@
 #include "pipe.h"
-#include "Manager.h"
-
-
-void Pipe::add_pipe() {
-    cout << "Type name of pipe:";
-    getline(cin >> ws, name);
-    log_action(name);
-    while (1) {
-        cout << "Type length of pipe:";
-        cin >> length;
-        log_action(length);
-        if (IsFailed()) {
-            continue;
-        }
-        else if (length < 0 || length > 1500) {
-            cout << "Enter existing length!" << endl;
-        }
-        else {
-            break;
-        }
-    }
-
-    while (1) {
-        cout << "Type diameter of pipe:";
-        cin >> diameter;
-        log_action(diameter);
-        if (IsFailed()) {
-            continue;
-        }
-        else if (diameter < 0 || diameter > 1200) {
-            cout << "Enter existing diameter!" << endl;
-        }
-        else {
-            break;
-        }
-    }
-}
+#include "Utils.h"
 
 void Pipe::output_pipe() {
     if (!name.empty()) {
@@ -72,4 +36,16 @@ void Pipe::load_pipe(ifstream& loadF) {
     loadF >> length;
     loadF >> diameter;
     loadF >> fixing;
+}
+std::istream& operator>>(std::istream& in, Pipe& p) {
+    std::cout << "Type pipe name: ";
+    INPUT_LINE(in, p.name);
+
+    std::cout << "Type pipe length: ";
+    p.length = GetCorrectNumber<double>(0, 1500);
+
+    std::cout << "Type pipe diameter: ";
+    p.diameter = GetCorrectNumber<double>(0, 1200);
+
+    return in;
 }

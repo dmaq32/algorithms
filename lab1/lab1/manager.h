@@ -4,32 +4,7 @@
 #include "pipe.h"
 #include "station.h"
 
-template <typename T>
-void log_action(T action);
-bool IsFailed();
-
 using namespace std;
-
-
-class redirect_output_wrapper
-{
-    std::ostream& stream;
-    std::streambuf* const old_buf;
-
-public:
-    redirect_output_wrapper(std::ostream& src)
-        : stream(src), old_buf(src.rdbuf()) {
-    }
-
-    ~redirect_output_wrapper() {
-        stream.rdbuf(old_buf);
-    }
-
-    void redirect(const std::ostream& dest) const {
-        stream.rdbuf(dest.rdbuf());
-    }
-};
-
 
 class Manager {
 private:
@@ -60,10 +35,6 @@ public:
     void pipes_batch_menu(vector<int>& ids);
     void handle_pipes_batch_menu();
 
-    vector<int> find_pipes_by_name(string& name);
-    vector<int> find_pipes_by_status(bool fixing_status);
-    vector<int> find_stations_by_name(string& name);
-    vector<int> find_stations_by_unused_percentage(double min_percent, double max_percent);
     
 };
 

@@ -5,15 +5,18 @@
 
 using namespace std;
 
+
+
 class Pipe {
 private:
     int id = 0;
-    string name;
     double length;
     double diameter;
-    bool fixing = false;
 public:
-    void add_pipe();
+    Pipe() : id(1), name(""), length(0.0), diameter(0.0), fixing(false) {}
+    Pipe(int newId) : id(newId) {}
+    string name;
+    bool fixing = false;
     void output_pipe();
     void edit_pipe();
     void save_pipe(ofstream& outputF);
@@ -23,6 +26,9 @@ public:
     bool get_is_fixing() { return fixing; }
     int get_pipe_id() { return id; }
 
-    void set_station_id(int new_id) { id = new_id; }
     void set_is_fixing(bool new_fixing) { fixing = new_fixing; }
+
+    friend std::istream& operator>>(std::istream& in, Pipe& p);
+
+
 };
