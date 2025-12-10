@@ -2,6 +2,7 @@
 #include <iostream>
 #include <chrono>
 #include "Utils.h"
+#include "Pipe.h"
 #include <unordered_set>
 using namespace std;
 
@@ -12,7 +13,7 @@ void Manager::display_search_menu() {
 }
 
 void Manager::display_main_menu() {
-    cout << endl << "MAIN MENU:" << endl<< "1. Add pipe" << endl<< "2. Add station" << endl<< "3. View all objects" << endl << "4. Edit pipe" << endl<< "5. Edit station" << endl << "6. Delete pipe" << endl << "7. Delete station" << endl << "8. View all pipes" << endl<< "9. View all stations" << endl << "10. Save to file" << endl << "11. Load from file" << endl << "12. Search objects" << endl <<"13. Batch edit pipes" << endl << "0. Exit" << endl
+    cout << endl << "MAIN MENU:" << endl<< "1. Add pipe" << endl<< "2. Add station" << endl<< "3. View all objects" << endl << "4. Edit pipe" << endl<< "5. Edit station" << endl << "6. Delete pipe" << endl << "7. Delete station" << endl << "8. View all pipes" << endl<< "9. View all stations" << endl << "10. Save to file" << endl << "11. Load from file" << endl << "12. Search objects" << endl <<"13. Batch edit pipes" << endl  << "14. Connect stations" << endl << "15. Topological sort" << endl << "0. Exit" << endl
 << "Choose option: ";
 
 }
@@ -78,7 +79,7 @@ void Manager::add_pipe() {
 
 void Manager::edit_pipe(int id) {
     if (pipes.contains(id)){
-        pipes[id].edit_pipe(); // at(id) указывает на ключ https://www.geeksforgeeks.org/cpp/unordered_map-at-cpp/
+        pipes[id].edit_pipe();
         cout << endl << "You successfully changed the fixing value of Pipe with ID " + to_string(id) + "to " + to_string(pipes[id].get_is_fixing()) << endl;
     }
     else {
@@ -94,6 +95,7 @@ void Manager::delete_pipe(int id) {
         else {
         cout << "Pipe with ID " << id << " not found!" << endl;
     }
+        connections.erase(id);
 }
 
 void Manager::add_station() {
@@ -122,6 +124,7 @@ void Manager::delete_station(int id) {
     else {
         cout << "Station with ID " << id << " not found!" << endl;
     }
+        connections.erase(id);
 }
 
 
@@ -171,17 +174,17 @@ bool CheckByPercentage(const Station& station, double filter_value) {
 template<typename T>
 using Filter_pipe = bool(*)(const Pipe &pipe,T param);
 
-template<typename T>
-vector<int>FindPipesByFilter(const unordered_map<int, Pipe>& pipes, Filter_pipe<T> f, T param) {
-    vector<int>res;
-    int i = 1;
-    for (auto& [id, pipe] : pipes) {
-        if (f(pipe,param))
-            res.push_back(i);
-        i++;
+    template<typename T>
+    vector<int>FindPipesByFilter(const unordered_map<int, Pipe>& pipes, Filter_pipe<T> f, T param) {
+        vector<int>res;
+        int i = 1;
+        for (auto& [id, pipe] : pipes) {
+            if (f(pipe,param))
+                res.push_back(i);
+            i++;
+        }
+        return res;
     }
-    return res;
-}
 template<typename T>
 using Filter_station = bool(*)(const Station& station, T param);
 
@@ -279,6 +282,7 @@ void Manager::edit_pipes_batch(vector<int>& ids) {
     cout << "Successfully edited " << edited_count << " pipes." << endl;
 }
 
+
 void Manager::delete_pipes_batch(vector<int>& ids) {
     if (ids.empty()) {
         cout << "No pipes selected for deletion." << endl;
@@ -316,7 +320,7 @@ void Manager::pipes_batch_menu(vector<int>& ids) {
 }
 void Manager::handle_pipes_batch_menu() {
     if (pipes.empty()) {
-        cout << "No pipes available for batch editing.\n";
+        cout << "No pipes available for batch editing." << endl;
         return;
     }
 
@@ -381,4 +385,142 @@ void Manager::handle_pipes_batch_menu() {
         cout << endl;
         pipes_batch_menu(selected_ids);
     }
+void Manager::connect_station() {
+            if (stations.size() < 2) {
+                std::cout << "At least two stations required." << endl;
+                return;
+            }
+            std::cout << "Enter ID of source station: ";
+            int from = GetCorrectNumber<int>(1, nextStationId - 1);
 
+            std::cout << "Enter ID of destination station: ";
+            int to = GetCorrectNumber<int>(1, nextStationId - 1);
+            while (to == from)
+            int to = GetCorrectNumber<int>(1, nextStationId - 1);
+
+            std::cout << "Enter pipe diameter (500, 700, 1000, 1400): ";
+            double diameter = GetCorrectDiameter();
+
+            int found_pipe_id = -1;
+            vector<int>founded_ids;
+            for (auto& [id, pipe] : pipes) {
+                if (!pipe.get_is_fixing() && (int)pipe.get_diameter() == diameter) {
+
+                    if (!connections.count(id)) {
+                        found_pipe_id = id;
+                        founded_ids.push_back(found_pipe_id);
+                        break;
+                    }
+                }
+            }
+
+            if (found_pipe_id == -1) {
+                cout << "No free pipe found with that diameter, create new" << endl;
+                Pipe newPipe(nextPipeId);
+                cin >> newPipe;
+                newPipe.set_diameter(diameter); 
+                pipes.emplace(nextPipeId, newPipe);
+                found_pipe_id = nextPipeId;
+                nextPipeId++;
+            }
+            cout << "Founded " << founded_ids.size() << " suitable pipes:" << endl;
+            for (auto& id : founded_ids)
+                cout << "ID " << id << endl;
+            cout << "Enter an ID of pipe, that you want to connect CSs" << endl;;
+            cin >> found_pipe_id;
+            while (count(founded_ids.begin(), founded_ids.end(), found_pipe_id) == 0) {
+                cout << "Enter avaliable id:" << endl;
+                cin >> found_pipe_id;
+                cerr << found_pipe_id;
+            }
+            connections.emplace(found_pipe_id,(from,to));
+            cout << "Stations connected: " << from << " -> " << to
+                << " by pipe with ID " << found_pipe_id << endl;
+}
+void Manager::topological_sort()
+{
+    if (stations.empty()) {
+        cout << "No stations." << endl;
+        return;
+    }
+    if (connections.empty()) {
+        cout << "No connections." << endl;
+        return;
+    }
+
+    //cout << endl << "Connections (original order): << endl";
+    //for (auto& [pid, ft] : connections)
+    //    cout  << ftfirst << " -> " << ft.second << " (pipe: " << pid << ")" << endl;
+
+    int n = stations.size();
+    vector<int> ids;
+    ids.reserve(n);
+
+    for (auto& [id, st] : stations)
+        ids.push_back(id);
+
+    unordered_map<int, int> id_index;
+    for (int i = 0; i < n; ++i)
+        id_index[ids[i]] = i + 1;
+
+    vector<vector<int>> adj(n + 1, vector<int>(n + 1, 0));
+
+   /* for (auto& [pid, ft] : connections) {
+        if (id_index.count(ft.first) && id_index.count(ft.second)) {
+            int i = id_index[ft.first];
+            int j = id_index[ft.second];
+            adj[i][j] = 1;
+        }
+    }*/
+
+    vector<int> indeg(n + 1, 0);
+    for (int j = 1; j <= n; ++j)
+        for (int i = 1; i <= n; ++i)
+            indeg[j] += adj[i][j];
+
+    vector<int> order;
+    order.reserve(n);
+
+    for (int step = 0; step < n; ++step)
+    {
+        int v = -1;
+        for (int i = 1; i <= n; ++i) {
+            if (indeg[i] == 0) {
+                v = i;
+                break;
+            }
+        }
+
+        if (v == -1) {
+            cout << endl << "Cycle detected Ч topological sort impossible." << endl;
+            return;
+        }
+
+        order.push_back(v);
+        indeg[v] = -1;
+        for (int j = 1; j <= n; ++j)
+            if (adj[v][j] == 1)
+                indeg[j]--;
+    }
+
+    cout << endl <<  "Topological order (station IDs): ";
+    for (int idx : order) {
+        int station_id = ids[idx - 1];
+        cout << "CS" << station_id << ' ';
+    }
+    cout << endl;
+
+    cout << endl << "Connections (topological order by source station):" << endl;
+
+   /* for (int idx_from : order) {
+        int from_id = ids[idx_from - 1];
+
+        for (auto& [pid, ft] : connections) {
+            if (ft.first == from_id) {
+                cout << "CS" << ft.first
+                    << " -> CS" << ft.second
+                    << " (pipe: " << pid << ")" << endl;
+            }
+        }
+    }*/
+}

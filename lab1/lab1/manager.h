@@ -3,6 +3,7 @@
 #include <unordered_map>
 #include "pipe.h"
 #include "station.h"
+#include <utility>
 
 using namespace std;
 
@@ -12,24 +13,27 @@ private:
     unordered_map<int, Station> stations;
     int nextStationId = 1;
     int nextPipeId = 1;
-
+    //unordered_map<int, int>connections;
+   unordered_map<int, pair<int, int>>connections;
 public:
+    
     void add_pipe();
     void display_all_pipes();
     void edit_pipe(int id);
     void delete_pipe(int id);
+    void topological_sort();
 
     void add_station();
     void display_all_stations() ;
     void edit_station(int id);
     void delete_station(int id);
+    void connect_station();
 
     void handle_search();
     void handle_pipes_batch_menu();
     void pipes_batch_menu(vector<int>& ids);
     void edit_pipes_batch(vector<int>& ids);
     void delete_pipes_batch(vector<int>& ids);
-
 
     void display_main_menu();
     void display_search_menu();
