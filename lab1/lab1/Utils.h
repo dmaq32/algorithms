@@ -1,6 +1,6 @@
 #pragma once
 #include <iostream>
-
+using namespace std;
 #define INPUT_LINE(in, str) getline(in>>std::ws, str); \
 						std::cerr << str << std::endl
 
@@ -22,6 +22,8 @@ public:
 		stream.rdbuf(dest.rdbuf());
 	}
 };
+
+double GetCorrectDiameter();
 
 template <typename T>
 T GetCorrectNumber(T min, T max)

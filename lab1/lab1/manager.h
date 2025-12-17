@@ -12,6 +12,7 @@ private:
     unordered_map<int, Station> stations;
     int nextStationId = 1;
     int nextPipeId = 1;
+    unordered_map<int,pair<int,int>> connections;
 
 public:
     void add_pipe();
@@ -23,6 +24,8 @@ public:
     void display_all_stations() ;
     void edit_station(int id);
     void delete_station(int id);
+    void connect_station();
+    void topological_sort();
 
     void handle_search();
     void handle_pipes_batch_menu();

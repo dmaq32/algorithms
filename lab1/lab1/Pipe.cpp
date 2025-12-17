@@ -1,17 +1,11 @@
 #include "pipe.h"
 #include "Utils.h"
+#include <vector>
+#include <algorithm>
 
-/*void Pipe::output_pipe() {
-    if (!name.empty()) {
-        cout << endl << "PIPE PROPERTIES" << endl;
-        cout << "ID: " << id << endl;
-        cout << "Name: " << name << endl << "Length: " << length << endl
-            << "Diameter: " << diameter << endl << "Fixing: " << fixing << endl << endl;
-    }
-    else {
-        cout << "Pipe properties are empty!" << endl;
-    }
-}*/
+
+
+
 
 void Pipe::edit_pipe() {
     if (name.empty()) {
@@ -45,7 +39,7 @@ std::istream& operator>>(std::istream& in, Pipe& p) {
     p.length = GetCorrectNumber<double>(0, 1500);
 
     std::cout << "Type pipe diameter: ";
-    p.diameter = GetCorrectNumber<double>(0, 1200);
+    p.diameter = GetCorrectDiameter();
 
     return in;
 }
