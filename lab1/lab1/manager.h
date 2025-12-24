@@ -13,8 +13,13 @@ private:
     int nextStationId = 1;
     int nextPipeId = 1;
     unordered_map<int,pair<int,int>> connections;
-
+    
+        
 public:
+    int pipe_capacity(Pipe& p);
+    void max_flow();
+    void shortest_path();
+
     void add_pipe();
     void display_all_pipes();
     void edit_pipe(int id);

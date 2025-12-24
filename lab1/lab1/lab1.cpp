@@ -24,7 +24,7 @@ int main()
 
     while (1) {
         manager.display_main_menu();
-        int choice = GetCorrectNumber(0, 15);
+        int choice = GetCorrectNumber(0, 17);
         switch (choice) {
         case 0: {
             return 0;
@@ -100,6 +100,11 @@ int main()
         case 15:
             manager.topological_sort();
             break;
+        case 16:
+            manager.max_flow();
+            break;
+        case 17:
+            manager.shortest_path();
         }
     }
 

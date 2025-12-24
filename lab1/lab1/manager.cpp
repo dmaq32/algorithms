@@ -3,6 +3,7 @@
 #include <chrono>
 #include "Utils.h"
 #include "Pipe.h"
+#include <queue>
 #include <unordered_set>
 using namespace std;
 
@@ -13,7 +14,7 @@ void Manager::display_search_menu() {
 }
 
 void Manager::display_main_menu() {
-    cout << endl << "MAIN MENU:" << endl << "1. Add pipe" << endl << "2. Add station" << endl << "3. View all objects" << endl << "4. Edit pipe" << endl << "5. Edit station" << endl << "6. Delete pipe" << endl << "7. Delete station" << endl << "8. View all pipes" << endl << "9. View all stations" << endl << "10. Save to file" << endl << "11. Load from file" << endl << "12. Search objects" << endl << "13. Batch edit pipes" << endl << "14. Connect stations" << endl << "15. Topological sort" << endl << "0. Exit" << endl
+    cout << endl << "MAIN MENU:" << endl << "1. Add pipe" << endl << "2. Add station" << endl << "3. View all objects" << endl << "4. Edit pipe" << endl << "5. Edit station" << endl << "6. Delete pipe" << endl << "7. Delete station" << endl << "8. View all pipes" << endl << "9. View all stations" << endl << "10. Save to file" << endl << "11. Load from file" << endl << "12. Search objects" << endl << "13. Batch edit pipes" << endl << "14. Connect stations" << endl << "15. Topological sort" << endl << "16. Max flow" << endl << "17. Minimal dist" << endl << "0. Exit" << endl
         << "Choose option: ";
 
 }
@@ -125,12 +126,13 @@ void Manager::delete_station(int id)
     stations.erase(id);
     cout << "Station with ID " << id << " deleted." << endl;
 
-    vector<int> toRemove;
-    for (auto& [pipe_id, ft] : connections) {
-        if (ft.first == id || ft.second == id)
-            connections.erase(pipe_id);
-        cout << "All connections involving station " << id << " have been removed." << endl;
+    for (auto it = connections.begin(); it != connections.end(); ) {
+        if (it->second.first == id || it->second.second == id)
+            it = connections.erase(it);
+        else
+            ++it;
     }
+    cout << "All connections involving station " << id << " have been removed." << endl;
 }
 
 void Manager::load_from_file(string& filename) {
@@ -393,18 +395,18 @@ void Manager::handle_pipes_batch_menu() {
 }
 void Manager::connect_station() {
     if (stations.size() < 2) {
-        std::cout << "At least two stations required." << endl;
+        cout << "At least two stations required." << endl;
         return;
     }
-    std::cout << "Enter ID of source station: ";
+    cout << "Enter ID of source station: ";
     int from = GetCorrectNumber<int>(1, nextStationId - 1);
 
-    std::cout << "Enter ID of destination station: ";
+    cout << "Enter ID of destination station: ";
     int to = GetCorrectNumber<int>(1, nextStationId - 1);
     while (to == from)
         int to = GetCorrectNumber<int>(1, nextStationId - 1);
 
-    std::cout << "Enter pipe diameter (500, 700, 1000, 1400): ";
+    cout << "Enter pipe diameter (500, 700, 1000, 1400): ";
     double diameter = GetCorrectDiameter();
 
     int found_pipe_id = -1;
@@ -431,11 +433,11 @@ void Manager::connect_station() {
     }
     cout << "Founded " << founded_ids.size() << " suitable pipes:" << endl;
     for (auto& id : founded_ids)
-        cout << "ID " << id << endl;
+    cout << "ID " << id << endl;
     cout << "Enter an ID of pipe, that you want to connect CSs" << endl;;
     found_pipe_id= GetCorrectNumber(1,nextPipeId-1);
     while (!founded_ids.contains(found_pipe_id)) {
-        cout << "Enter avaliable id:" << endl;
+    cout << "Enter avaliable id:" << endl;
         found_pipe_id = GetCorrectNumber(1, nextPipeId - 1);
     }
     connections.emplace(found_pipe_id, std::make_pair(from, to));
@@ -514,5 +516,203 @@ void Manager::topological_sort()
     cout << endl << "Topological order (station IDs): ";
     for (int id : order)
         cout << id << " ";
+    cout << endl;
+}
+
+struct Node {
+    int id;
+    vector<struct Edge*> edges;
+    Node(int i) : id(i) {}
+};
+
+struct Edge {
+    Node* adjacentNode;
+    int weight;
+    Edge(Node* node, int w) : adjacentNode(node), weight(w) {}
+};
+    
+
+int Manager::pipe_capacity(Pipe& p) {
+    if (p.fixing) return 0;
+    double base = pow(p.get_diameter(), 5) / p.get_length();
+    return (sqrt(base) * 100);
+}
+
+int fordFulkerson(unordered_map<int, Node*>& graph, int sourceId, int sinkId)
+{
+    if (graph.empty()) return 0;
+    if (graph.find(sourceId) == graph.end() || graph.find(sinkId) == graph.end() || sourceId == sinkId)
+        return 0;
+
+    Node* source = graph[sourceId];
+    Node* sink = graph[sinkId];
+
+    struct ResidualEdge {
+        Node* from; Node* to; int capacity; Edge* originalEdge; bool isForward;
+        ResidualEdge(Node* f = nullptr, Node* t = nullptr, int cap = 0, Edge* orig = nullptr, bool forward = true)
+            : from(f), to(t), capacity(cap), originalEdge(orig), isForward(forward) {
+        }
+    };
+
+    unordered_map<Node*, vector<ResidualEdge>> residualGraph;
+    for (auto& pair : graph) {
+        Node* u = pair.second;
+        for (Edge* edge : u->edges) {
+            Node* v = edge->adjacentNode;
+            residualGraph[u].push_back(ResidualEdge(u, v, edge->weight, edge, true));
+            residualGraph[v].push_back(ResidualEdge(v, u, 0, nullptr, false));
+        }
+    }
+
+    int maxFlow = 0;
+    while (true) {
+        queue<Node*> q;
+        unordered_map<Node*, bool> visited;
+        unordered_map<Node*, ResidualEdge*> parent;
+        q.push(source); visited[source] = true;
+
+        bool foundPath = false;
+        while (!q.empty() && !foundPath) {
+            Node* u = q.front(); q.pop();
+            for (ResidualEdge& re : residualGraph[u]) {
+                if (!visited[re.to] && re.capacity > 0) {
+                    q.push(re.to);
+                    visited[re.to] = true;
+                    parent[re.to] = &re;
+                    if (re.to == sink) { foundPath = true; break; }
+                }
+            }
+        }
+        if (!foundPath) break;
+
+        int pathFlow = INT_MAX;
+        for (Node* v = sink; v != source; v = parent[v]->from)
+            pathFlow = min(pathFlow, parent[v]->capacity);
+
+        for (Node* v = sink; v != source; v = parent[v]->from) {
+            ResidualEdge* re = parent[v];
+            re->capacity -= pathFlow;
+            for (ResidualEdge& rev : residualGraph[v])
+                if (rev.to == re->from) { rev.capacity += pathFlow; break; }
+        }
+        maxFlow += pathFlow;
+    }
+    return maxFlow;
+}
+
+
+void Manager::max_flow()
+{
+    cout << endl <<"Enter source ID:" << endl;
+    int sourceID = GetCorrectNumber(1, nextPipeId - 1);
+    int sinkID = GetCorrectNumber(1, nextPipeId - 1);
+    while (sourceID == sinkID)
+    int sinkID = GetCorrectNumber(1, nextPipeId - 1);
+    unordered_map<int, Node*> graph;
+    for (auto& [id, st] : stations)
+        graph[id] = new Node(id);
+
+    for (auto& [pid, ft] : connections) {
+        int u = ft.first;
+        int v = ft.second;
+        Pipe& p = pipes[pid];
+
+        int cap = pipe_capacity(p);
+        if (cap <= 0) continue;
+
+        Node* from = graph[u];
+        Node* to = graph[v];
+        Edge* e = new Edge(to, cap);
+        from->edges.push_back(e);
+    }
+
+    int result = fordFulkerson(graph, sourceID, sinkID);
+
+    for (auto& [id, node] : graph) {
+        for (Edge* e : node->edges)
+            delete e;
+        delete node;
+    }
+    cout << "Max flow with sourceID " << sourceID << " and sinkID " << sinkID << " = " << result << endl;
+}
+
+void Manager::shortest_path()
+{
+    int sourceId, targetId;
+    cout << "Enter source Id" << endl;
+    sourceId = GetCorrectNumber(1, nextStationId - 1);
+    cout << "Enter target Id" << endl;
+    targetId = GetCorrectNumber(1, nextStationId - 1);
+    while (sourceId == targetId)
+        cout << "Enter avaliable number:" << endl;
+    targetId = GetCorrectNumber(1, nextStationId - 1);
+
+    if (stations.empty()) {
+        cout << "No stations." << endl;
+        return;
+    }
+    if (connections.empty()) {
+        cout << "No connections." << endl;
+        return;
+    }
+    if (!stations.count(sourceId) || !stations.count(targetId)) {
+        cout << "One or both station IDs not found!" << endl;
+        return;
+    }
+
+    unordered_map<int, vector<pair<int, int>>> adj;
+
+    for (auto& [pid, ft] : connections) {
+        int from = ft.first;
+        int to = ft.second;
+        if (!pipes.count(pid)) continue;
+
+        Pipe& p = pipes[pid];
+        if (p.get_is_fixing()) continue; 
+        adj[from].push_back({ to, p.get_length()});
+    }
+
+    unordered_map<int, int> dist;
+    unordered_map<int, int> prev;
+    for (auto& [id, st] : stations)
+        dist[id] = INT_MAX;
+
+    dist[sourceId] = 0;
+
+    using pii = pair<int, int>; 
+    priority_queue<pii, vector<pii>, greater<>> pq;
+    pq.push({ 0, sourceId });
+
+    while (!pq.empty()) {
+        auto [d, u] = pq.top();
+        pq.pop();
+
+        if (d > dist[u]) continue;
+
+        for (auto& [v, w] : adj[u]) {
+            if (dist[u] != INT_MAX && dist[u] + w < dist[v]) {
+                dist[v] = dist[u] + w;
+                prev[v] = u;
+                pq.push({ dist[v], v });
+            }
+        }
+    }
+
+    if (dist[targetId] == INT_MAX) {
+        cout << "No path from station " << sourceId << " to station " << targetId << "." << endl;
+        return;
+    }
+
+    vector<int> path;
+    for (int at = targetId; at != 0 && prev.count(at); at = prev[at])
+        path.push_back(at);
+    path.push_back(sourceId);
+    reverse(path.begin(), path.end());
+
+    cout << "Shortest path (" << dist[targetId] << " units): ";
+    for (size_t i = 0; i < path.size(); ++i) {
+        cout << path[i];
+        if (i + 1 < path.size()) cout << " -> ";
+    }
     cout << endl;
 }

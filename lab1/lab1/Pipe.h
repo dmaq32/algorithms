@@ -22,6 +22,7 @@ public:
     void load_pipe(ifstream& loadF);
 
     string get_pipe_name() { return name; }
+    double get_length() { return length; }
     bool get_is_fixing() { return fixing; }
     int get_pipe_id() { return id; }
     double get_diameter(){ return diameter; }
