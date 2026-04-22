@@ -3,6 +3,13 @@
 ##
 ## Get latest from https://github.com/github/gitignore/blob/main/VisualStudio.gitignore
 
+# Local tooling and repository-specific generated files
+.codex
+*.exe
+lab1/lab1/log*
+lab1/lab1/output*.txt
+logs/
+
 # User-specific files
 *.rsuser
 *.suo
